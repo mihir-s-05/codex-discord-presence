@@ -1,0 +1,34 @@
+{
+  "name": "codex-discord-rich-presence",
+  "version": "0.1.0",
+  "description": "Discord Rich Presence for Codex using Codex hooks.",
+  "type": "module",
+  "bin": {
+    "codex-discord": "./dist/cli.js"
+  },
+  "files": [
+    "dist",
+    "scripts",
+    "README.md",
+    "LICENSE"
+  ],
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "test": "vitest run",
+    "check": "npm run build && npm run test",
+    "install:windows": "powershell -ExecutionPolicy Bypass -File scripts/install-windows.ps1",
+    "install:macos": "sh scripts/install-macos.sh"
+  },
+  "dependencies": {
+    "@xhayper/discord-rpc": "^1.3.3",
+    "ps-list": "^9.0.0"
+  },
+  "devDependencies": {
+    "@types/node": "^24.0.0",
+    "typescript": "^5.9.0",
+    "vitest": "^3.2.0"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}

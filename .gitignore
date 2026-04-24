@@ -1,0 +1,17 @@
+node_modules/
+dist/
+coverage/
+*.log
+.DS_Store
+
+# Local reference clone; not part of this package source.
+reference/
+
+# npm/package artifacts
+*.tgz
+.npm/
+
+# OS/editor noise
+Thumbs.db
+.idea/
+.vscode/
