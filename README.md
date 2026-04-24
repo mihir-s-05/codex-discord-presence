@@ -46,6 +46,12 @@ To force the idle activity:
 node dist/cli.js test-idle
 ```
 
+To clear a stale activity immediately:
+
+```sh
+node dist/cli.js clear
+```
+
 ## What It Shows
 
 - Session start: `Ready` / `Project: your-project`
@@ -58,6 +64,8 @@ node dist/cli.js test-idle
 Idle stays visible by default.
 
 The elapsed timer starts when a Codex turn begins and stays the same across tool updates. It ends when Codex emits the `Stop` hook.
+
+When Codex is no longer running, the daemon clears Discord activity and exits after a short grace period.
 
 The hook process and daemon compare build IDs on every update. If the project has been rebuilt while an old daemon is still running, the old daemon exits and the hook starts a fresh one automatically.
 
@@ -105,12 +113,14 @@ Runtime flow:
 - `CODEX_DISCORD_PRIVACY`: `project` or `generic`, defaults to `project`
 - `CODEX_DISCORD_CLEAR_AFTER_MS`: defaults to `0`, which keeps idle visible
 - `CODEX_DISCORD_LARGE_IMAGE_KEY`: defaults to `codex`
+- `CODEX_DISCORD_EXIT_AFTER_NO_CODEX_MS`: defaults to `30000`; set to `0` to keep the daemon alive even after Codex exits
 
 ## Troubleshooting
 
 - Make sure Discord is open.
 - In Discord, enable activity status.
 - Run `node dist/cli.js doctor`.
+- If Discord is still showing an old activity after Codex exits, run `node dist/cli.js clear`.
 - If you changed code and want to force a daemon restart, run `node dist/cli.js restart-daemon`.
 - If hooks fail on Windows, rerun `scripts/install-windows.ps1`; it creates `~/.codex/codex-discord-hook.cmd`, which avoids PowerShell quoting problems.
 - Log file: `%TEMP%\codex-discord-rich-presence.log` on Windows, `/tmp/codex-discord-rich-presence.log` on macOS.

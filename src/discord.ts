@@ -77,11 +77,12 @@ export class DiscordPresenceClient {
       return;
     }
     await this.client?.user?.clearActivity();
+    logLine("activity cleared");
   }
 
-  destroy(): void {
+  async destroy(): Promise<void> {
     try {
-      void this.client?.destroy();
+      await this.client?.destroy();
     } finally {
       this.connected = false;
       this.client = undefined;

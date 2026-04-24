@@ -6,7 +6,8 @@ const baseConfig: RuntimeConfig = {
   clientId: "1465420195911831593",
   privacy: "project",
   clearAfterMs: 30_000,
-  largeImageKey: "codex"
+  largeImageKey: "codex",
+  exitAfterNoCodexMs: 30_000
 };
 
 describe("presence privacy", () => {

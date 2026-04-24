@@ -48,7 +48,14 @@ async function main(): Promise<void> {
     }
     case "restart-daemon": {
       await sendDaemonRequest({ type: "shutdown" }).catch(() => undefined);
+      await clearDirectActivity();
       console.log("Daemon will restart on the next hook update.");
+      return;
+    }
+    case "clear": {
+      await sendDaemonRequest({ type: "shutdown" }).catch(() => undefined);
+      await clearDirectActivity();
+      console.log("Cleared Discord activity and stopped the daemon.");
       return;
     }
     case "help":
@@ -85,7 +92,8 @@ Commands:
   doctor    Check local setup
   test-activity  Show a direct Discord activity for 60 seconds
   test-idle  Send the Codex idle activity through the daemon
-  restart-daemon  Stop the current daemon so the next hook starts a fresh one`);
+  restart-daemon  Stop the current daemon so the next hook starts a fresh one
+  clear     Clear Discord activity and stop the current daemon`);
 }
 
 async function runTestActivity(): Promise<void> {
@@ -106,7 +114,20 @@ async function runTestActivity(): Promise<void> {
   console.log("Discord activity set for 60 seconds. Check your Discord profile/activity area now.");
   await new Promise((resolve) => setTimeout(resolve, 60_000));
   await client.clearActivity();
-  client.destroy();
+  await client.destroy();
+}
+
+async function clearDirectActivity(): Promise<void> {
+  const client = new DiscordPresenceClient(readRuntimeConfig());
+  try {
+    if (await client.connect()) {
+      await client.clearActivity();
+    }
+  } catch {
+    // Clearing is best-effort; Discord may be closed or RPC may be unavailable.
+  } finally {
+    await client.destroy();
+  }
 }
 
 void main().catch((error: unknown) => {

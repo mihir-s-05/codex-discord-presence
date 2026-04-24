@@ -8,22 +8,28 @@ import {
 } from "./constants.js";
 
 export type PrivacyMode = "project" | "generic";
+const DEFAULT_EXIT_AFTER_NO_CODEX_MS = 30_000;
 
 export interface RuntimeConfig {
   clientId: string;
   privacy: PrivacyMode;
   clearAfterMs: number;
   largeImageKey: string;
+  exitAfterNoCodexMs: number;
 }
 
 export function readRuntimeConfig(env: NodeJS.ProcessEnv = process.env): RuntimeConfig {
   const clearAfterMs = Number.parseInt(env.CODEX_DISCORD_CLEAR_AFTER_MS ?? "", 10);
+  const exitAfterNoCodexMs = Number.parseInt(env.CODEX_DISCORD_EXIT_AFTER_NO_CODEX_MS ?? "", 10);
   const privacy = env.CODEX_DISCORD_PRIVACY === "generic" ? "generic" : "project";
   return {
     clientId: env.CODEX_DISCORD_CLIENT_ID?.trim() || DEFAULT_CLIENT_ID,
     privacy,
     clearAfterMs: Number.isFinite(clearAfterMs) && clearAfterMs >= 0 ? clearAfterMs : DEFAULT_CLEAR_AFTER_MS,
-    largeImageKey: env.CODEX_DISCORD_LARGE_IMAGE_KEY?.trim() || DEFAULT_LARGE_IMAGE_KEY
+    largeImageKey: env.CODEX_DISCORD_LARGE_IMAGE_KEY?.trim() || DEFAULT_LARGE_IMAGE_KEY,
+    exitAfterNoCodexMs: Number.isFinite(exitAfterNoCodexMs) && exitAfterNoCodexMs >= 0
+      ? exitAfterNoCodexMs
+      : DEFAULT_EXIT_AFTER_NO_CODEX_MS
   };
 }
 

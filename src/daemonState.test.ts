@@ -7,7 +7,8 @@ const config: RuntimeConfig = {
   clientId: "1465420195911831593",
   privacy: "project",
   clearAfterMs: 0,
-  largeImageKey: "codex"
+  largeImageKey: "codex",
+  exitAfterNoCodexMs: 30_000
 };
 
 describe("daemon presence states", () => {
