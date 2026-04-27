@@ -12,9 +12,18 @@ const BUILD_FILES = [
 ];
 
 export function currentBuildId(): string {
-  const distDir = dirname(fileURLToPath(import.meta.url));
-  return BUILD_FILES.map((file) => {
-    const stat = statSync(join(distDir, file));
-    return `${file}:${stat.mtimeMs}:${stat.size}`;
-  }).join("|");
+  try {
+    const distDir = dirname(fileURLToPath(import.meta.url));
+    return BUILD_FILES.map((file) => {
+      const stat = statSync(join(distDir, file));
+      return `${file}:${stat.mtimeMs}:${stat.size}`;
+    }).join("|");
+  } catch {
+    try {
+      const stat = statSync(process.execPath);
+      return `exe:${stat.mtimeMs}:${stat.size}`;
+    } catch {
+      return "unknown";
+    }
+  }
 }

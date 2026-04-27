@@ -49,10 +49,18 @@ function presenceRequest(update: PresenceUpdate): DaemonRequest {
 }
 
 export function spawnDaemon(): void {
-  const cliPath = join(dirname(fileURLToPath(import.meta.url)), "cli.js");
-  const child = spawn(process.execPath, [cliPath, "daemon"], {
+  let args: string[];
+  try {
+    const cliPath = join(dirname(fileURLToPath(import.meta.url)), "cli.js");
+    args = [cliPath, "daemon"];
+  } catch {
+    // Compiled binary: process.execPath is the exe, pass daemon subcommand directly
+    args = ["daemon"];
+  }
+  const child = spawn(process.execPath, args, {
     detached: true,
     stdio: "ignore",
+    windowsHide: true,
     env: process.env
   });
   child.unref();

@@ -1,6 +1,5 @@
 import { execFile } from "node:child_process";
 import { promisify } from "node:util";
-import psList from "ps-list";
 
 const execFileAsync = promisify(execFile);
 
@@ -13,7 +12,7 @@ export interface ProcessInfo {
 export async function isCodexRunning(): Promise<boolean> {
   const processes = process.platform === "win32"
     ? await listWindowsProcesses()
-    : await psList();
+    : await listUnixProcesses();
   return processes.some(isCodexProcess);
 }
 
@@ -55,7 +54,7 @@ async function listWindowsProcesses(): Promise<ProcessInfo[]> {
       "Bypass",
       "-Command",
       script
-    ], { maxBuffer: 8 * 1024 * 1024 });
+    ], { maxBuffer: 8 * 1024 * 1024, windowsHide: true });
     return parseWindowsProcesses(stdout);
   } catch {
     return [];
@@ -91,4 +90,19 @@ function isWindowsProcessRow(value: unknown): value is {
   }
   const row = value as Record<string, unknown>;
   return typeof row.ProcessId === "number" && typeof row.Name === "string";
+}
+
+async function listUnixProcesses(): Promise<ProcessInfo[]> {
+  try {
+    const { stdout } = await execFileAsync("ps", ["-e", "-o", "pid=,comm=,args="]);
+    return stdout.trim().split("\n").flatMap((line) => {
+      const match = /^\s*(\d+)\s+(\S+)\s+(.*)$/.exec(line);
+      if (!match) {
+        return [];
+      }
+      return [{ pid: Number(match[1]), name: match[2], cmd: match[3] }];
+    });
+  } catch {
+    return [];
+  }
 }

@@ -1,8 +1,11 @@
-import psList from "ps-list";
+import { execFile } from "node:child_process";
+import { promisify } from "node:util";
 import { Client } from "@xhayper/discord-rpc";
 import type { SetActivity } from "@xhayper/discord-rpc";
 import type { RuntimeConfig } from "./env.js";
 import { logLine } from "./log.js";
+
+const execFileAsync = promisify(execFile);
 
 const DISCORD_PROCESS_NAMES = new Set([
   "Discord.exe",
@@ -15,8 +18,16 @@ const DISCORD_PROCESS_NAMES = new Set([
 
 export async function isDiscordRunning(): Promise<boolean> {
   try {
-    const processes = await psList();
-    return processes.some((processInfo) => DISCORD_PROCESS_NAMES.has(processInfo.name));
+    if (process.platform === "win32") {
+      const { stdout } = await execFileAsync("powershell.exe", [
+        "-NoProfile", "-ExecutionPolicy", "Bypass", "-Command",
+        "Get-Process | Select-Object -ExpandProperty Name | ConvertTo-Json -Compress"
+      ], { windowsHide: true });
+      const names = JSON.parse(stdout.trim()) as string[];
+      return names.some((n) => DISCORD_PROCESS_NAMES.has(`${n}.exe`) || DISCORD_PROCESS_NAMES.has(n));
+    }
+    const { stdout } = await execFileAsync("ps", ["-e", "-o", "comm="]);
+    return stdout.split("\n").some((n) => DISCORD_PROCESS_NAMES.has(n.trim()));
   } catch {
     return false;
   }
