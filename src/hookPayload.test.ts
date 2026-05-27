@@ -7,6 +7,8 @@ describe("hook payload parsing", () => {
     ["UserPromptSubmit", "running"],
     ["PreToolUse", "tool"],
     ["PostToolUse", "tool"],
+    ["PreCompact", "compacting"],
+    ["PostCompact", "compacting"],
     ["PermissionRequest", "approval"],
     ["Stop", "idle"]
   ])("maps %s to %s", (eventName, phase) => {

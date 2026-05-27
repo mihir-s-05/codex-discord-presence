@@ -25,6 +25,8 @@ export function actionText(update: PresenceUpdate): string {
       return "Thinking";
     case "tool":
       return update.eventName === "PostToolUse" ? `Finished ${tool}` : `Starting ${tool}`;
+    case "compacting":
+      return update.eventName === "PostCompact" ? "Compacted context" : "Compacting context";
     case "approval":
       return "Awaiting approval";
     case "idle":

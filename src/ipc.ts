@@ -54,7 +54,6 @@ export function spawnDaemon(): void {
     const cliPath = join(dirname(fileURLToPath(import.meta.url)), "cli.js");
     args = [cliPath, "daemon"];
   } catch {
-    // Compiled binary: process.execPath is the exe, pass daemon subcommand directly
     args = ["daemon"];
   }
   const child = spawn(process.execPath, args, {

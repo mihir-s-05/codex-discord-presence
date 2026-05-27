@@ -11,6 +11,5 @@ export function logLine(message: string): void {
     mkdirSync(tmpdir(), { recursive: true });
     appendFileSync(logPath(), `${new Date().toISOString()} ${message}\n`, "utf8");
   } catch {
-    // Logging must never affect hooks.
   }
 }

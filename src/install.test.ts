@@ -3,17 +3,17 @@ import { mergeCodexHooksFeature, mergeHooksJson } from "./install.js";
 
 describe("config installer", () => {
   it("adds a features section when config is empty", () => {
-    expect(mergeCodexHooksFeature("")).toBe("[features]\ncodex_hooks = true\n");
+    expect(mergeCodexHooksFeature("")).toBe("[features]\nhooks = true\ncodex_hooks = true\n");
   });
 
-  it("preserves config and inserts codex_hooks into existing features", () => {
+  it("preserves config and inserts current and legacy hook feature flags into existing features", () => {
     const result = mergeCodexHooksFeature('model = "gpt-5.4"\n\n[features]\nvoice = true\n\n[notice]\nseen = true\n');
     expect(result).toContain('model = "gpt-5.4"');
-    expect(result).toContain("[features]\nvoice = true\ncodex_hooks = true\n\n[notice]");
+    expect(result).toContain("[features]\nvoice = true\nhooks = true\ncodex_hooks = true\n\n[notice]");
   });
 
   it("updates codex_hooks when it already exists", () => {
-    expect(mergeCodexHooksFeature("[features]\ncodex_hooks = false\n")).toBe("[features]\ncodex_hooks = true\n");
+    expect(mergeCodexHooksFeature("[features]\ncodex_hooks = false\n")).toBe("[features]\ncodex_hooks = true\nhooks = true\n");
   });
 
   it("merges hooks without dropping unrelated handlers", () => {
@@ -35,5 +35,7 @@ describe("config installer", () => {
     expect(JSON.stringify(merged.hooks?.Stop)).toContain("echo keep");
     expect(JSON.stringify(merged.hooks?.Stop)).toContain("node cli.js hook --codex-discord");
     expect(JSON.stringify(merged.hooks?.SessionStart)).toContain("startup|resume");
+    expect(JSON.stringify(merged.hooks?.PreCompact)).toContain("manual|auto");
+    expect(JSON.stringify(merged.hooks?.PostCompact)).toContain("manual|auto");
   });
 });

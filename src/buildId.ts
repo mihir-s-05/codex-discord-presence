@@ -8,6 +8,7 @@ const BUILD_FILES = [
   "discord.js",
   "hookPayload.js",
   "ipc.js",
+  "presenceSessions.js",
   "presence.js"
 ];
 

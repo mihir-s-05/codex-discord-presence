@@ -5,6 +5,7 @@ import { toDiscordActivity } from "./presence.js";
 import { logLine } from "./log.js";
 import { currentBuildId } from "./buildId.js";
 import { isCodexRunning } from "./codexProcess.js";
+import { PresenceSessions } from "./presenceSessions.js";
 
 export async function runDaemon(): Promise<void> {
   const config = readRuntimeConfig();
@@ -12,7 +13,7 @@ export async function runDaemon(): Promise<void> {
   const daemonBuildId = currentBuildId();
   let clearTimer: NodeJS.Timeout | undefined;
   let watchdogTimer: NodeJS.Timeout | undefined;
-  let activeRunStartedAt: number | undefined;
+  const sessions = new PresenceSessions();
   let lastCodexSeenAt = Date.now();
   let shuttingDown = false;
   logLine("daemon starting");
@@ -43,13 +44,13 @@ export async function runDaemon(): Promise<void> {
       clearTimer = undefined;
     }
 
-    const startTimestamp = updateRunTimer(request.update);
-    const activity = toDiscordActivity(request.update, config, startTimestamp);
+    const selected = sessions.update(request.update);
+    const activity = toDiscordActivity(selected.update, config, selected.startedAt);
     void discord.setActivity(activity).catch((error: unknown) => {
       logLine(`activity update failed: ${error instanceof Error ? error.message : String(error)}`);
     });
 
-    if (request.update.phase === "idle" && config.clearAfterMs > 0) {
+    if (sessions.displayedPhase() === "idle" && config.clearAfterMs > 0) {
       clearTimer = setTimeout(() => {
         void discord.clearActivity().catch(() => undefined);
       }, config.clearAfterMs);
@@ -93,16 +94,5 @@ export async function runDaemon(): Promise<void> {
     }
     logLine("codex process not detected; clearing activity and stopping daemon");
     await shutdown();
-  }
-
-  function updateRunTimer(update: NonNullable<DaemonRequest["update"]>): number | undefined {
-    if (update.phase === "idle") {
-      activeRunStartedAt = undefined;
-      return undefined;
-    }
-    if (update.eventName === "UserPromptSubmit" || activeRunStartedAt === undefined) {
-      activeRunStartedAt = update.timestamp;
-    }
-    return activeRunStartedAt;
   }
 }

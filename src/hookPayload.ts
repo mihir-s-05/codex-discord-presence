@@ -8,12 +8,18 @@ export interface HookPayload {
   hook_event_name?: string;
   model?: string;
   tool_name?: string;
+  tool_input?: unknown;
+  tool_response?: unknown;
+  trigger?: "manual" | "auto" | string;
+  source?: "startup" | "resume" | "clear" | string;
+  permission_mode?: string;
 }
 
 export type PresencePhase =
   | "ready"
   | "running"
   | "tool"
+  | "compacting"
   | "approval"
   | "idle";
 
@@ -70,6 +76,9 @@ function phaseForEvent(eventName: SupportedHookEvent): PresencePhase {
     case "PreToolUse":
     case "PostToolUse":
       return "tool";
+    case "PreCompact":
+    case "PostCompact":
+      return "compacting";
     case "PermissionRequest":
       return "approval";
     case "Stop":

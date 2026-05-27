@@ -41,13 +41,13 @@ export function installUserHooks(): InstallResult {
 export function mergeCodexHooksFeature(existing: string): string {
   const normalized = existing.replace(/\r\n/g, "\n");
   if (!normalized.trim()) {
-    return "[features]\ncodex_hooks = true\n";
+    return "[features]\nhooks = true\ncodex_hooks = true\n";
   }
 
   const lines = normalized.split("\n");
   const featuresStart = lines.findIndex((line) => /^\s*\[features]\s*$/.test(line));
   if (featuresStart === -1) {
-    return ensureTrailingNewline(normalized) + "\n[features]\ncodex_hooks = true\n";
+    return ensureTrailingNewline(normalized) + "\n[features]\nhooks = true\ncodex_hooks = true\n";
   }
 
   let sectionEnd = lines.length;
@@ -58,18 +58,8 @@ export function mergeCodexHooksFeature(existing: string): string {
     }
   }
 
-  for (let index = featuresStart + 1; index < sectionEnd; index += 1) {
-    if (/^\s*codex_hooks\s*=/.test(lines[index])) {
-      lines[index] = "codex_hooks = true";
-      return ensureTrailingNewline(lines.join("\n"));
-    }
-  }
-
-  let insertAt = sectionEnd;
-  while (insertAt > featuresStart + 1 && lines[insertAt - 1]?.trim() === "") {
-    insertAt -= 1;
-  }
-  lines.splice(insertAt, 0, "codex_hooks = true");
+  upsertFeature(lines, featuresStart, sectionEnd, "hooks");
+  upsertFeature(lines, featuresStart, sectionEnd, "codex_hooks");
   return ensureTrailingNewline(lines.join("\n"));
 }
 
@@ -167,10 +157,28 @@ function matcherForEvent(eventName: SupportedHookEvent): string | undefined {
     case "PostToolUse":
     case "PermissionRequest":
       return "*";
+    case "PreCompact":
+    case "PostCompact":
+      return "manual|auto";
     case "UserPromptSubmit":
     case "Stop":
       return undefined;
   }
+}
+
+function upsertFeature(lines: string[], featuresStart: number, sectionEnd: number, key: string): void {
+  for (let index = featuresStart + 1; index < sectionEnd; index += 1) {
+    if (new RegExp(`^\\s*${key}\\s*=`).test(lines[index])) {
+      lines[index] = `${key} = true`;
+      return;
+    }
+  }
+
+  let insertAt = sectionEnd;
+  while (insertAt > featuresStart + 1 && lines[insertAt - 1]?.trim() === "") {
+    insertAt -= 1;
+  }
+  lines.splice(insertAt, 0, `${key} = true`);
 }
 
 function parseHooksFile(existing: string): HooksFile {

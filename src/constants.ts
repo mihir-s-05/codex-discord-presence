@@ -9,6 +9,8 @@ export const SUPPORTED_HOOK_EVENTS = [
   "UserPromptSubmit",
   "PreToolUse",
   "PostToolUse",
+  "PreCompact",
+  "PostCompact",
   "PermissionRequest",
   "Stop"
 ] as const;

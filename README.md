@@ -1,126 +1,131 @@
 # Codex Discord Rich Presence
 
-Shows what Codex is doing in Discord Rich Presence using Codex hooks.
+Show what Codex is doing in your Discord activity.
 
-It works with Codex CLI and the Codex app because it installs user-wide hooks in `~/.codex`.
+This adds Discord Rich Presence for Codex CLI and the Codex app. It shows a simple status like `Thinking`, `Starting Bash`, or `Idle`, plus the project folder name. It does not show prompts, shell commands, transcript paths, or full file paths.
 
-## Install Or Reinstall
+## Install
 
-Reinstalling is the same as installing. Rerun the script for your platform.
+Clone or download this project, then run the installer for your platform from the project folder.
 
-### Windows
-
-From this project folder:
+Windows:
 
 ```powershell
 powershell -ExecutionPolicy Bypass -File .\scripts\install-windows.ps1
 ```
 
-### macOS
-
-From this project folder:
+macOS:
 
 ```sh
 sh ./scripts/install-macos.sh
 ```
 
-After install, restart Codex and start a new Codex turn.
+Restart Codex after installing. The next Codex activity should update Discord automatically.
 
-The installer also stops any old daemon. The next Codex hook starts a fresh daemon from the current build.
+If Codex asks you to trust the new hooks, approve the `codex-discord` hooks before expecting Discord updates.
 
-## Check Setup
+## What You Will See
+
+- `Ready` when a Codex session starts
+- `Thinking` after you send a prompt
+- `Starting Bash` or `Finished Bash` around tool use
+- `Compacting context` during compaction
+- `Awaiting approval` when Codex needs permission
+- `Idle` when a turn finishes
+
+If you have more than one Codex thread running, Discord shows the most recently active non-idle thread. An idle update from one thread will not clear another active thread.
+
+The elapsed timer starts when that Codex session starts and stays consistent across tool calls.
+
+## Commands
+
+Check your setup:
 
 ```sh
 node dist/cli.js doctor
 ```
 
-To force a visible Discord activity test:
+Show a direct Discord test activity:
 
 ```sh
 node dist/cli.js test-activity
 ```
 
-To force the idle activity:
-
-```sh
-node dist/cli.js test-idle
-```
-
-To clear a stale activity immediately:
+Clear Discord activity and stop the daemon:
 
 ```sh
 node dist/cli.js clear
 ```
 
-## What It Shows
+Restart the daemon after rebuilding:
 
-- Session start: `Ready` / `Project: your-project`
-- Prompt submitted: `Thinking` / `Project: your-project`
-- Before a tool runs: `Starting Bash` / `Project: your-project`
-- After a tool runs: `Finished Bash` / `Project: your-project`
-- Approval request: `Awaiting approval` / `Project: your-project`
-- Turn stop: `Idle` / `Project: your-project`
-
-Idle stays visible by default.
-
-The elapsed timer starts when a Codex turn begins and stays the same across tool updates. It ends when Codex emits the `Stop` hook.
-
-When Codex is no longer running, the daemon clears Discord activity and exits after a short grace period.
-
-The hook process and daemon compare build IDs on every update. If the project has been rebuilt while an old daemon is still running, the old daemon exits and the hook starts a fresh one automatically.
+```sh
+node dist/cli.js restart-daemon
+```
 
 ## Privacy
 
-The Discord activity does not include prompts, shell commands, transcript paths, or full file paths. By default it shows only the project folder name and a coarse Codex phase.
+By default, Discord sees only:
 
-Set `CODEX_DISCORD_PRIVACY=generic` to hide the project folder name too.
+- A broad Codex status
+- The project folder name
+- The elapsed session timer
 
-## Project Structure
+To hide the project folder name too, set:
 
-```text
-.
-├── src/                         TypeScript source for the CLI and daemon
-│   ├── cli.ts                   Command entrypoint: install, doctor, daemon, hook, tests
-│   ├── install.ts               Writes ~/.codex config, hooks.json, and hook shim
-│   ├── daemon.ts                Long-running process that owns Discord RPC
-│   ├── ipc.ts                   Local pipe/socket bridge between hooks and daemon
-│   ├── buildId.ts               Detects rebuilt code so the daemon can restart itself
-│   ├── discord.ts               Discord process detection and Rich Presence client
-│   ├── hookPayload.ts           Converts Codex hook payloads into status updates
-│   ├── presence.ts              Formats Discord activity text
-│   └── *.test.ts                Unit tests
-├── scripts/
-│   ├── install-windows.ps1      One-command Windows install/reinstall
-│   └── install-macos.sh         One-command macOS install/reinstall
-├── dist/                        Compiled JavaScript created by npm run build
-├── reference/openai-codex/      Shallow clone used only as implementation reference
-├── package.json                 npm scripts, dependencies, and package metadata
-├── README.md                    User documentation
-└── LICENSE                      MIT license
+```sh
+CODEX_DISCORD_PRIVACY=generic
 ```
-
-Runtime flow:
-
-1. Codex fires a hook such as `PreToolUse`, `PostToolUse`, or `Stop`.
-2. The hook runs `~/.codex/codex-discord-hook.cmd` on Windows or `~/.codex/codex-discord-hook` on macOS.
-3. The shim calls `node dist/cli.js hook`.
-4. The hook command sends a small status update to the daemon over a local pipe/socket.
-5. The daemon updates Discord Rich Presence through Discord RPC.
 
 ## Configuration
 
-- `CODEX_DISCORD_CLIENT_ID`: defaults to `1465420195911831593`
-- `CODEX_DISCORD_PRIVACY`: `project` or `generic`, defaults to `project`
-- `CODEX_DISCORD_CLEAR_AFTER_MS`: defaults to `0`, which keeps idle visible
-- `CODEX_DISCORD_LARGE_IMAGE_KEY`: defaults to `codex`
-- `CODEX_DISCORD_EXIT_AFTER_NO_CODEX_MS`: defaults to `30000`; set to `0` to keep the daemon alive even after Codex exits
+Optional environment variables:
+
+| Variable | Default | Description |
+| --- | --- | --- |
+| `CODEX_DISCORD_PRIVACY` | `project` | Use `generic` to hide project names. |
+| `CODEX_DISCORD_CLEAR_AFTER_MS` | `0` | How long to wait before clearing idle activity. `0` keeps idle visible. |
+| `CODEX_DISCORD_EXIT_AFTER_NO_CODEX_MS` | `30000` | How long the daemon stays alive after Codex exits. |
+| `CODEX_DISCORD_CLIENT_ID` | bundled app ID | Use a custom Discord application. |
+| `CODEX_DISCORD_LARGE_IMAGE_KEY` | `codex` | Discord asset key for the large image. |
 
 ## Troubleshooting
 
-- Make sure Discord is open.
-- In Discord, enable activity status.
-- Run `node dist/cli.js doctor`.
-- If Discord is still showing an old activity after Codex exits, run `node dist/cli.js clear`.
-- If you changed code and want to force a daemon restart, run `node dist/cli.js restart-daemon`.
-- If hooks fail on Windows, rerun `scripts/install-windows.ps1`; it creates `~/.codex/codex-discord-hook.cmd`, which avoids PowerShell quoting problems.
-- Log file: `%TEMP%\codex-discord-rich-presence.log` on Windows, `/tmp/codex-discord-rich-presence.log` on macOS.
+Make sure Discord is open and activity status is enabled in Discord settings.
+
+Run:
+
+```sh
+node dist/cli.js doctor
+```
+
+If Discord still shows stale activity:
+
+```sh
+node dist/cli.js clear
+```
+
+If you rebuilt the project and want Codex to use the newest version:
+
+```sh
+node dist/cli.js restart-daemon
+```
+
+Logs are written to:
+
+- Windows: `%TEMP%\codex-discord-rich-presence.log`
+- macOS: `/tmp/codex-discord-rich-presence.log`
+
+## Development
+
+Build and test:
+
+```sh
+npm run check
+```
+
+Re-run the installer after changing hook installation behavior. For normal code changes, rebuilding and running `restart-daemon` is enough.
+
+## License
+
+MIT

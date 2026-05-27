@@ -24,7 +24,7 @@ export async function runDoctor(): Promise<DoctorCheck[]> {
   const checks: DoctorCheck[] = [];
   const runtimeConfig = readRuntimeConfig();
   const platformSupported = isSupportedPlatform();
-  const hooksEnabled = fileContains(configPath, /codex_hooks\s*=\s*true/);
+  const hooksEnabled = fileContains(configPath, /(?:^|\n)\s*(?:hooks|codex_hooks)\s*=\s*true/);
   const hooksInstalled = hooksJsonLooksInstalled(hooksPath);
   const discordRunning = await isDiscordRunning();
 
@@ -47,7 +47,7 @@ export async function runDoctor(): Promise<DoctorCheck[]> {
   checks.push({
     name: "config.toml",
     ok: hooksEnabled,
-    message: `${configPath} ${hooksEnabled ? "enables" : "does not enable"} codex hooks`
+    message: `${configPath} ${hooksEnabled ? "enables" : "does not enable"} Codex hooks`
   });
   checks.push({
     name: "hooks.json",
@@ -93,6 +93,11 @@ export async function runDoctor(): Promise<DoctorCheck[]> {
       message: "Codex docs have recently reported Windows hooks as version-sensitive; verify with one real Codex turn after install"
     });
   }
+  checks.push({
+    name: "hook-trust",
+    ok: true,
+    message: "Codex 0.129+ requires newly installed user hooks to be trusted in the hooks review UI before they execute"
+  });
 
   return checks;
 }

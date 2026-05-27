@@ -78,7 +78,6 @@ async function runHookCommand(): Promise<void> {
     const update = normalizeHookPayload(payload);
     await sendPresenceUpdate(update, true);
   } catch {
-    // Hooks must fail open. Codex should never be blocked by Discord status.
   }
 }
 
@@ -124,7 +123,6 @@ async function clearDirectActivity(): Promise<void> {
       await client.clearActivity();
     }
   } catch {
-    // Clearing is best-effort; Discord may be closed or RPC may be unavailable.
   } finally {
     await client.destroy();
   }
